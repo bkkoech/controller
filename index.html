@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WallPaint</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <style>
+        #command-history {
+            margin-top: 20px;
+        }
+
+        .card {
+            margin: 20px;
+        }
+
+        .time {
+            float: right;
+        }
+
+        .navbar-brand {
+            display: block;
+            width: 100%;
+            text-align: center;
+        }
+
+        #preview-images {
+            display: flex;
+            flex-direction: row;
+            margin: 0 0 40px 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        #preview-images li {
+            width: 20%;
+            text-align: center;
+        }
+
+        #preview-images li div {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 350px;
+            margin-bottom: 40px;
+        }
+
+        #preview-images img {
+            max-width: 100%;
+            max-height: 350px;
+        }
+    </style>
+    <script type="text/javascript">
+        window.onload = () => {
+            let commandHistory = [];
+            let commandEl = document.querySelector('#command-input');
+            let executeCommandEl = document.querySelector('#execute-command');
+            let commandHistoryEl = document.querySelector('#command-history');
+            let paintCommandEl = document.querySelector('#paint-command');
+            let imageEl = document.querySelector('input[name ="image"]:checked');
+
+            executeCommandEl.addEventListener('click', (event) => {
+                event.preventDefault();
+                let command = commandEl.value;
+                executeCommand(command);
+            });
+
+            paintCommandEl.addEventListener('click', (event) => {
+                event.preventDefault();
+                let imageName = imageEl.value;
+                paintImage(imageName);
+            });
+
+            function paintImage(imageName) {
+                 fetch('/api/paint', {
+                    method: 'post',
+                    body: imageName
+                }).then(_ => {
+                });
+            }
+
+            function updateCommandHistory() {
+                commandHistoryEl.innerHTML = commandHistory
+                    .sort((history1, history2) => history2.time - history1.time)
+                    .map(history => {
+                        let date = new Date(history.time);
+                        return `
+                    <li class="list-group-item">${history.command}
+                        <span class="time">${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}</span>
+                    </li>
+                    `;
+                    }).join('');
+            }
+
+            function executeCommand(command) {
+                fetch('/api/execute', {
+                    method: 'post',
+                    body: command
+                }).then(_ => {
+                    let now = Date.now();
+                    commandHistory.push({
+                        command: command,
+                        time: now
+                    });
+                    updateCommandHistory();
+                });
+            }
+        }
+    </script>
+</head>
+<body>
+<header>
+    <div class="navbar navbar-dark bg-dark box-shadow">
+        <div class="navbar-brand">
+            <strong>WallPaint</strong>
+        </div>
+    </div>
+</header>
+<div class="card">
+    <div class="card-header">
+        Previews
+    </div>
+    <div class="card-body">
+        <form id="paint-image-form">
+            <ul id="preview-images" class="list-group">
+                <li>
+                    <div>
+                        <img src="images/1.jpg">
+                    </div>
+                    <input type="radio" name="image" value="1.jpg" autocomplete="off" checked>
+                </li>
+                <li>
+                    <div>
+                        <img src="images/2.jpg">
+                    </div>
+                    <input type="radio" name="image" value="2.jpg" autocomplete="off">
+                </li>
+                <li>
+                    <div>
+                        <img src="images/3.jpg">
+                    </div>
+                    <input type="radio" name="image" value="3.jpg" autocomplete="off">
+                </li>
+                <li>
+                    <div>
+                        <img src="images/4.jpg">
+                    </div>
+                    <input type="radio" name="image" value="4.jpg" autocomplete="off">
+                </li>
+                <li>
+                    <div>
+                        <img src="images/5.jpg">
+                    </div>
+                    <input type="radio" name="image" value="5.jpg" autocomplete="off">
+                </li>
+            </ul>
+            <div>
+                <button type="button" id="paint-command" class="btn btn-primary">Paint on Wall</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="card">
+    <div class="card-header">
+        Control Panel
+    </div>
+    <div class="card-body">
+        <form>
+            <div class="form-group">
+                <label for="command-input">Command</label>
+                <input type="text" class="form-control" id="command-input"
+                       placeholder="BLINK / PAINT / MOVE_UP 10 / MOVE_DOWN 4 / MOVE_LEFT 6 / MOVE_RIGHT 1 / MOVE_FORWARD / MOVE_BACKWARD">
+            </div>
+            <button type="submit" id="execute-command" class="btn btn-primary">Execute</button>
+        </form>
+        <ul id="command-history" class="list-group">
+        </ul>
+    </div>
+</div>
+</body>
+</html>
